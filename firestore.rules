@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /leaderboards/duskride-v1/players/{uid} {
+      function owner() {
+        return request.auth != null && request.auth.uid == uid
+          && request.auth.token.firebase.sign_in_provider == 'google.com'
+          && request.auth.token.email_verified == true;
+      }
+      function validRecord() {
+        let d = request.resource.data;
+        return d.keys().hasAll(['ruleset','runId','seed','score','distanceMeters','durationMs','flips','perfectLandings','bestAirMs','displayName','updatedAt'])
+          && d.keys().hasOnly(['ruleset','runId','seed','score','distanceMeters','durationMs','flips','perfectLandings','bestAirMs','displayName','updatedAt'])
+          && d.ruleset == 'duskride-v1'
+          && d.runId is string && d.runId.matches('^[a-f0-9-]{36}$')
+          && d.seed is string && d.seed.size() > 0 && d.seed.size() <= 32
+          && d.displayName is string && d.displayName.size() > 0 && d.displayName.size() <= 40
+          && d.score is int && d.score > 0 && d.score <= 100000000
+          && d.distanceMeters is int && d.distanceMeters >= 0 && d.distanceMeters <= 10000000
+          && d.durationMs is int && d.durationMs >= 1000 && d.durationMs <= 604800000
+          && d.distanceMeters <= d.durationMs * 0.047 + 5
+          && d.score <= d.durationMs * 0.5
+          && d.flips is int && d.flips >= 0 && d.flips <= 1000000
+          && d.perfectLandings is int && d.perfectLandings >= 0 && d.perfectLandings <= 1000000
+          && d.bestAirMs is int && d.bestAirMs >= 0 && d.bestAirMs <= 60000
+          && d.updatedAt == request.time;
+      }
+      allow get: if true;
+      allow list: if request.query.limit != null && request.query.limit <= 50;
+      allow create: if owner() && validRecord();
+      allow update: if owner() && validRecord()
+        && (request.resource.data.score > resource.data.score
+          || (request.resource.data.score == resource.data.score && request.resource.data.distanceMeters > resource.data.distanceMeters));
+      allow delete: if owner();
+    }
+  }
+}

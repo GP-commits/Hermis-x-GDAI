@@ -2,6 +2,9 @@ import { World, CHAPTERS, CHAPTER_LENGTH, JOURNEY_LENGTH, METERS_PER_UNIT, clamp
 import { BikePhysics, STEP } from './physics.js';
 import { Scene } from './scene.js';
 import { Soundscape } from './audio.js';
+import { RankedRun } from './leaderboard-model.js';
+import { LeaderboardService } from './leaderboard-service.js';
+import { bindLeaderboard } from './leaderboard-view.js';
 
 const $ = id => document.getElementById(id);
 const show = id => { const el = $(id); if (el.classList.contains('hidden')) el.classList.remove('hidden'); };
@@ -14,6 +17,13 @@ const storage = {
 function readSeed() { try { return decodeURIComponent(location.hash.slice(1)).trim().slice(0, 32) || 'DUSKRIDE'; } catch { return 'DUSKRIDE'; } }
 let world = new World(readSeed());
 let bike = new BikePhysics(world);
+let rankedRun = new RankedRun(world.seed);
+const leaderboard = new LeaderboardService();
+const renderLeaderboard = bindLeaderboard(leaderboard, () => rankedRun.eligible);
+leaderboard.addEventListener('change', event => {
+  if (event.detail.previousUID && event.detail.previousUID !== event.detail.user?.uid) { rankedRun.eligible = false; renderLeaderboard(); }
+});
+if (storage.get('cloud-signed-in', false)) leaderboard.init();
 const scene = new Scene($('landscape'), world);
 const audio = new Soundscape();
 audio.enabled = storage.get('sound', true);
@@ -81,6 +91,7 @@ function showTrick(label, score = '') {
   hide('trick'); void $('trick').offsetWidth; show('trick'); trickUntil = now() + 2.2;
 }
 function openOverlay(id) {
+  if (overlay === 'leaderboard-overlay' && id !== overlay) leaderboard.stopWatching();
   clearInput();
   if (!overlay) lastFocus = document.activeElement;
   if (overlay) hide(overlay);
@@ -89,6 +100,7 @@ function openOverlay(id) {
   requestAnimationFrame(() => $(id).querySelector('button:not(:disabled),input')?.focus({ preventScroll: true }));
 }
 function closeOverlay(restoreFocus = true) {
+  if (overlay === 'leaderboard-overlay') leaderboard.stopWatching();
   if (overlay) hide(overlay);
   overlay = null;
   if (mode === 'riding') document.body.classList.add('riding');
@@ -115,6 +127,7 @@ function updateStats() {
   $('stat-distance').textContent = kms(bike.state.distance);
   $('stat-air').textContent = `${bike.state.bestAir.toFixed(1)}s`;
   $('stat-flips').textContent = bike.state.flips;
+  $('stat-score').textContent = `${bike.state.score.toLocaleString()} trick points · ${rankedRun.eligible ? 'Ranked ride' : 'Practice ride'}`;
   $('seed-input').value = world.seed;
   for (const button of document.querySelectorAll('[data-bike]')) {
     const required = button.dataset.bike === 'hardtail' ? 1000 : button.dataset.bike === 'tiny' ? 2000 : 0;
@@ -137,13 +150,16 @@ function rewind() {
   show('rewind-label'); audio.rewind(); last = performance.now(); accumulator = 0;
 }
 function restart(seed = world.seed, x = 80) {
+  captureScore(true);
+  rankedRun = new RankedRun(seed, x);
   world = new World(seed); bike = new BikePhysics(world); scene.setWorld(world);
   scene.bikeStyle = selectedBike;
   currentChapter = world.chapterAt(x); currentDay = 1; firstAir = false; lowerTrailSeen = false; summitSeen = false;
   history.replaceState(null, '', `${location.pathname}${location.search}${seed === 'DUSKRIDE' ? '' : '#' + encodeURIComponent(seed)}`);
   startRide(x);
 }
-function save() { storage.set('chapter', maxChapter); storage.set('distance', bestDistance); }
+function captureScore(immediate = false) { leaderboard.record(rankedRun.capture(bike.state, bike.rewinding), immediate); }
+function save() { storage.set('chapter', maxChapter); storage.set('distance', bestDistance); captureScore(mode !== 'riding'); leaderboard.persist(); }
 function renderJourney() {
   $('chapter-list').replaceChildren();
   CHAPTERS.forEach((chapter, index) => {
@@ -167,6 +183,12 @@ function showControls() {
   if (mode === 'riding' || mode === 'summit') { pause(); previousMode = 'paused'; }
   openOverlay('controls-overlay');
 }
+function showLeaderboard() {
+  if (overlay === 'leaderboard-overlay') return;
+  previousMode = mode;
+  if (mode === 'riding' || mode === 'summit') { pause(); previousMode = 'paused'; }
+  captureScore(true); renderLeaderboard(); openOverlay('leaderboard-overlay'); leaderboard.watch();
+}
 function closeSubpanel() {
   if (previousMode === 'paused') { mode = 'paused'; updateStats(); openOverlay('pause-overlay'); }
   else { mode = previousMode; closeOverlay(); }
@@ -179,6 +201,10 @@ async function fullscreen() {
   } catch { notify('Fullscreen is unavailable in this browser.'); }
 }
 
+$('leaderboard-button').addEventListener('click', showLeaderboard);
+$('pause-leaderboard').addEventListener('click', showLeaderboard);
+$('ranked-ride').addEventListener('click', () => restart());
+$('close-leaderboard').addEventListener('click', closeSubpanel);
 $('start-button').addEventListener('click', () => startRide());
 $('pause-button').addEventListener('click', pause);
 $('resume-button').addEventListener('click', resume);
@@ -229,7 +255,7 @@ window.addEventListener('keydown', event => {
   }
   if (event.code === 'Escape') {
     event.preventDefault();
-    if (overlay === 'controls-overlay' || overlay === 'journey-overlay') closeSubpanel();
+    if (overlay === 'controls-overlay' || overlay === 'journey-overlay' || overlay === 'leaderboard-overlay') closeSubpanel();
     else if (mode === 'paused') resume(); else pause();
     return;
   }
@@ -252,6 +278,7 @@ function handleEvents() {
   for (const event of bike.consumeEvents()) {
     if (event.type === 'takeoff' && !firstAir) { firstAir = true; hint(touch ? 'HOLD LEFT / RIGHT TO ROTATE · RELEASE TO LEVEL OUT' : 'HOLD ← / → TO ROTATE · RELEASE TO LEVEL OUT', 5); }
     if (event.type === 'landing') {
+      captureScore();
       audio.land(event.perfect); scene.burst(bike.state);
       if (event.flips) showTrick(event.direction, `+${event.flips * 250}${event.perfect ? '  ·  PERFECT +100' : ''}`);
       else if (event.perfect) showTrick('PERFECT', '+100');
@@ -281,7 +308,7 @@ function updateUI() {
   if (!summitSeen && s.x > JOURNEY_LENGTH - 100 && s.x < JOURNEY_LENGTH) {
     summitSeen = true; summitTimer = 3; mode = 'summit'; clearInput(); announceChapter(7); hide('ride-hint');
   }
-  if (s.crashed && s.crashTime > .55 && !crashShown) {
+  if (s.crashed && !bike.rewinding && s.crashTime > .55 && !crashShown) {
     crashShown = true; mode = 'crashed'; openOverlay('crash-overlay'); save();
   }
   if (now() > lastSaved + 5) { save(); lastSaved = now(); }

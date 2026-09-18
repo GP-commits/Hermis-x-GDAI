@@ -20,6 +20,7 @@
       </a>
       <span class="top-caption" id="top-caption">A DOWNHILL DAYDREAM</span>
       <div class="top-actions">
+        <button class="icon-button hidden" id="leaderboard-button" aria-label="Open leaderboard" title="Leaderboard"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3h10v6a5 5 0 0 1-10 0V3Zm0 2H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4m-5 2v6m-4 1h8"/></svg></button>
         <button class="icon-button" id="sound-button" aria-label="Turn sound on" title="Sound (M)" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none"><path d="m11 5-6 4H2v6h3l6 4V5Z"/><path class="sound-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-slash" d="m16 9 6 6m0-6-6 6"/></svg></button>
         <button class="icon-button" id="fullscreen-button" aria-label="Enter fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24" fill="none"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
         <button class="icon-button hidden" id="pause-button" aria-label="Pause ride" title="Pause (Esc)"><svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14M16 5v14"/></svg></button>
@@ -35,6 +36,10 @@
       <span class="sound-note"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 9V7a5 5 0 0 1 10 0v2M2 8h3v6H2zm9 0h3v6h-3z"/></svg> A little better with headphones</span>
     </section>
 
+    <div class="team-credit" aria-label="Team Hermes × GDAI CUSAT">
+      <div class="team-logos"><img src="./assets/hermes-cusat.png" alt="Hermes CUSAT logo" width="640" height="640"/><span>×</span><img src="./assets/gdai-cusat.jpeg" alt="GDAI CUSAT logo" width="1280" height="1280"/></div>
+      <span class="team-credit-label">TEAM HERMES <b>×</b> GDAI CUSAT</span>
+    </div>
     <div id="ride-hud" class="ride-hud hidden" aria-live="off"><span id="distance">0.00 <small>km</small></span><span id="flow-count" class="flow-count"></span></div>
     <div class="chapter-arrival hidden" id="chapter-arrival" aria-live="polite"><span class="eyebrow" id="arrival-number">CHAPTER 01</span><h2 id="arrival-title">Golden Ridge</h2><p id="arrival-note">Every journey starts with a little gravity.</p></div>
     <div class="trick hidden" id="trick" aria-live="polite"><span id="trick-label">PERFECT</span><small id="trick-score">+100</small></div>
@@ -51,7 +56,7 @@
     <div class="touch-hints hidden" id="touch-hints" aria-hidden="true"><span>↶<small>BRAKE / ROTATE</small></span><span>↷<small>PEDAL / ROTATE</small></span></div>
 
     <section class="overlay hidden" id="pause-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title">
-      <div class="panel pause-panel"><span class="eyebrow">TAKE YOUR TIME</span><h2 id="pause-title">Catch your breath.</h2><p>The mountain will be right here.</p><div class="ride-stats"><div><strong id="stat-distance">0.00</strong><span>KILOMETRES</span></div><div><strong id="stat-air">0.0s</strong><span>LONGEST AIR</span></div><div><strong id="stat-flips">0</strong><span>FLIPS LANDED</span></div></div><button class="primary-button" id="resume-button">Back to the trail <span>→</span></button><div class="panel-links"><button id="pause-journey">The journey</button><button id="pause-controls">How to ride</button><button id="restart-button">Start fresh</button></div><div class="seed-row"><label for="seed-input">TRAIL SEED</label><div><input id="seed-input" maxlength="32" spellcheck="false" aria-label="Trail seed"/><button id="seed-button" aria-label="Ride this seed">↗</button></div><button id="share-button" title="Copy a link to this trail">Copy trail link</button></div><div class="bike-row"><span>YOUR RIDE</span><button class="bike-option selected" data-bike="mountain" aria-pressed="true">Mountain</button><button class="bike-option" data-bike="hardtail" aria-pressed="false">Hardtail <small>1 km</small></button><button class="bike-option" data-bike="tiny" aria-pressed="false">Tiny bike <small>2 km</small></button></div></div>
+      <div class="panel pause-panel"><span class="eyebrow">TAKE YOUR TIME</span><h2 id="pause-title">Catch your breath.</h2><p>The mountain will be right here.</p><div class="ride-stats"><div><strong id="stat-distance">0.00</strong><span>KILOMETRES</span></div><div><strong id="stat-air">0.0s</strong><span>LONGEST AIR</span></div><div><strong id="stat-flips">0</strong><span>FLIPS LANDED</span></div></div><p id="stat-score" class="score-note"></p><button class="primary-button" id="resume-button">Back to the trail <span>→</span></button><div class="panel-links"><button id="pause-journey">The journey</button><button id="pause-controls">How to ride</button><button id="pause-leaderboard" class="hidden">Leaderboard</button><button id="restart-button">Start fresh</button></div><div class="seed-row"><label for="seed-input">TRAIL SEED</label><div><input id="seed-input" maxlength="32" spellcheck="false" aria-label="Trail seed"/><button id="seed-button" aria-label="Ride this seed">↗</button></div><button id="share-button" title="Copy a link to this trail">Copy trail link</button></div><div class="bike-row"><span>YOUR RIDE</span><button class="bike-option selected" data-bike="mountain" aria-pressed="true">Mountain</button><button class="bike-option" data-bike="hardtail" aria-pressed="false">Hardtail <small>1 km</small></button><button class="bike-option" data-bike="tiny" aria-pressed="false">Tiny bike <small>2 km</small></button></div></div>
     </section>
 
     <section class="overlay hidden" id="crash-overlay" role="dialog" aria-modal="true" aria-labelledby="crash-title"><div class="panel crash-panel"><span class="rewind-symbol">‹‹</span><h2 id="crash-title">Find that flow again.</h2><p>Just a moment back. You’ve got this.</p><button class="primary-button" id="rewind-button">Rewind the ride <span>↶</span></button><span class="small-note">TAP TO REWIND · OR PRESS R</span></div></section>
@@ -59,6 +64,23 @@
     <section class="overlay hidden" id="controls-overlay" role="dialog" aria-modal="true" aria-labelledby="controls-title"><div class="panel controls-panel"><button class="close-button" id="close-controls" aria-label="Close controls">×</button><span class="eyebrow">LESS THINKING. MORE RIDING.</span><h2 id="controls-title">Go with the mountain.</h2><div class="control-rows"><div><span><kbd>→</kbd> <em>or</em> <kbd>D</kbd></span><p><strong>Find your momentum</strong>Pedal on the trail. Rotate forward in the air.</p></div><div><span><kbd>←</kbd> <em>or</em> <kbd>A</kbd></span><p><strong>Take it easy</strong>Brake on the trail. Rotate backward in the air.</p></div><div><span><kbd class="wide-key">SPACE</kbd></span><p><strong>Feel the terrain</strong>Hold to pump downhill. Release on the rise.</p></div></div><p class="touch-instruction">On a phone, hold the right or left half of the screen. Hold both to pump. Lift your thumbs to coast.</p><p class="control-extra">Land with your wheels along the slope. Let go in the air for a little help. <span>R — rewind &nbsp; · &nbsp; Esc — pause &nbsp; · &nbsp; M — sound</span></p><button class="primary-button" id="controls-done">I’ve got it <span>→</span></button></div></section>
 
     <section class="overlay hidden" id="journey-overlay" role="dialog" aria-modal="true" aria-labelledby="journey-title"><div class="panel journey-panel"><button class="close-button" id="close-journey" aria-label="Close journey">×</button><span class="eyebrow">ONE MOUNTAIN. A WORLD WITHIN.</span><h2 id="journey-title">Chase the horizon.</h2><p>Eight places to get a little lost. Discover them as you ride.</p><div id="chapter-list" class="chapter-list"></div><div class="journey-end"><span>☀</span> And when the sun returns, the journey goes on.</div></div></section>
+    <section class="overlay hidden" id="leaderboard-overlay" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title">
+      <div class="panel leaderboard-panel">
+        <button class="close-button" id="close-leaderboard" aria-label="Close leaderboard">×</button>
+        <span class="eyebrow">THE SAME SKY. A THOUSAND RIDES.</span>
+        <h2 id="leaderboard-title">Ride with the world.</h2>
+        <p>Best trick scores. Distance breaks a tie.</p>
+        <div class="board-account"><strong id="board-account"></strong><button class="google-button" id="google-sign-in" disabled>Sign in with Google</button><button class="text-button hidden" id="board-sign-out">Sign out</button><small id="board-privacy">Your Google display name and best run appear publicly. Your email stays private.</small></div>
+        <p class="board-best" id="board-best"></p>
+        <p class="board-sync" id="board-sync" role="status"></p>
+        <p class="board-error" id="board-error" role="status"></p>
+        <div class="board-heading"><span>TOP 50 · ALL TRAILS</span><span id="board-status">CONNECTING…</span></div>
+        <ol id="board-rows" class="board-rows" aria-label="Leaderboard rankings"></ol><p id="board-empty" class="board-empty"></p>
+        <button class="text-button hidden" id="board-retry">Try connecting again</button>
+        <p class="board-practice" id="board-practice"></p><button class="primary-button" id="ranked-ride">Start a fresh ride <span>→</span></button>
+        <small class="board-scoring">Flip +250 · Perfect landing +100 · Long air +75</small>
+      </div>
+    </section>
     <div class="toast hidden" id="toast" role="status"></div>
     <noscript><div class="no-script">DUSKRIDE needs JavaScript to bring the mountain to life. Enable it and reload to ride.</div></noscript>
   </main>

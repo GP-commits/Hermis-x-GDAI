@@ -1,0 +1,11 @@
+{
+  "indexes": [{
+    "collectionGroup": "players",
+    "queryScope": "COLLECTION",
+    "fields": [
+      { "fieldPath": "score", "order": "DESCENDING" },
+      { "fieldPath": "distanceMeters", "order": "DESCENDING" }
+    ]
+  }],
+  "fieldOverrides": []
+}
