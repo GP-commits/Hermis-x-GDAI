@@ -4,7 +4,7 @@ The game stays on GitHub Pages. Firebase Authentication supplies Google sign-in;
 
 ## Current deployment
 
-DUSKRIDE uses the `mugo-db2ea` project and its own web app (`1:587609979262:web:5dfc56fd2a1cc82f981b2f`). Existing apps and authorized domains are preserved. Only `/leaderboards/duskride-v1/players` receives new access; all other Firestore paths retain the original deny-all rule. Original rule snapshots are stored locally in the ignored `.firebase-backup/` directory. The leaderboard index was added individually to avoid deleting any unrelated indexes. Re-read active rules before future deployments to this shared project.
+DUSKRIDE uses the `mugo-db2ea` project and its own web app (`1:587609979262:web:5dfc56fd2a1cc82f981b2f`). Existing apps and authorized domains are preserved. Current competition scores use `/leaderboards/duskride-v2/players` and owner-only `/duskrideProfiles/{uid}`. Legacy v1 scores remain stored separately; all other Firestore paths retain the original deny-all rule. Original rule snapshots are stored locally in the ignored `.firebase-backup/` directory. The leaderboard index was added individually to avoid deleting any unrelated indexes. Re-read active rules before future deployments to this shared project.
 
 ## Connect a different backend
 
@@ -24,9 +24,9 @@ The Google popup must be opened directly by the player's click. Do not switch to
 
 ## Score behavior
 
-Rank by trick points, then distance. A fresh start is eligible; chapter-select rides are practice. One run's score is a snapshot, never an increment on the stored total. Rewind therefore cannot add the same event twice. A better guest score can be claimed during explicit Google sign-in. Switching away from a signed-in account makes the current run practice so it cannot be submitted under another account.
+Rank by trick points, then distance. A fresh Stage 1 start is eligible; chapter-select rides are practice. Crashes end the run, and R restarts at Stage 1. The new v2 board excludes legacy rewind-assisted scores without deleting them. First-time Google players must provide name, department, and year (1–6) before publishing a score; existing accounts without a profile get the same form. Profiles are owner-readable and created once, and every public score must match that stored identity. One run's score is a snapshot, never an increment on the stored total. Retries start with a new run ID and zero points. A better guest score can be claimed during explicit Google sign-in. Switching away from a signed-in account makes the current run practice so it cannot be submitted under another account.
 
-The browser records scores locally, batches writes, and retries queued submissions after reconnecting. Per-user queues keep signed-out accounts separate. Transactions plus monotonic database rules keep a weaker device submission from replacing a stronger one. Only verified Google identities can write their own row. Public documents contain display name and run statistics, never email addresses or credentials.
+The browser records scores locally, batches writes, and retries queued submissions after reconnecting. Per-user queues keep signed-out accounts separate. Transactions plus monotonic database rules keep a weaker device submission from replacing a stronger one. Only verified Google identities can write their own row. Public score documents contain the player name, department, year, and run statistics, never email addresses or credentials. The top three appear on the riding screen and the full top 50 are available in the leaderboard panel.
 
 These are casual client-reported scores. Validation restricts schema and plausible ranges but cannot prove an unmodified browser played the run. Prize competitions would need authoritative server simulation or replay verification. Firestore/Auth usage remains subject to the chosen project's quotas; no paid upgrade is configured by this code.
 

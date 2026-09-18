@@ -1,5 +1,5 @@
-export const RULESET = 'duskride-v1';
-export const COLLECTION = 'leaderboards/duskride-v1/players';
+export const RULESET = 'duskride-v2';
+export const COLLECTION = 'leaderboards/duskride-v2/players';
 export const BOARD_LIMIT = 50;
 
 export function compareScores(a, b) {
@@ -32,3 +32,6 @@ export class RankedRun {
     return validScore(value) ? value : null;
   }
 }
+
+export const PROFILES = 'duskrideProfiles';
+export function validProfile(p) { return Boolean(p && typeof p.name === 'string' && p.name.trim().length >= 2 && p.name.length <= 40 && typeof p.department === 'string' && p.department.trim().length >= 2 && p.department.length <= 60 && Number.isInteger(p.year) && p.year >= 1 && p.year <= 6); }

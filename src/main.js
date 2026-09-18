@@ -19,11 +19,13 @@ let world = new World(readSeed());
 let bike = new BikePhysics(world);
 let rankedRun = new RankedRun(world.seed);
 const leaderboard = new LeaderboardService();
+let promptedProfileUID = null;
 const renderLeaderboard = bindLeaderboard(leaderboard, () => rankedRun.eligible);
 leaderboard.addEventListener('change', event => {
+  if (event.detail.needsProfile && !event.detail.profileLoading && !event.detail.profileError && promptedProfileUID !== event.detail.user?.uid) { promptedProfileUID = event.detail.user.uid; showLeaderboard(); }
   if (event.detail.previousUID && event.detail.previousUID !== event.detail.user?.uid) { rankedRun.eligible = false; renderLeaderboard(); }
 });
-if (storage.get('cloud-signed-in', false)) leaderboard.init();
+setTimeout(() => leaderboard.watch(), 800);
 const scene = new Scene($('landscape'), world);
 const audio = new Soundscape();
 audio.enabled = storage.get('sound', true);
@@ -97,7 +99,7 @@ function openOverlay(id) {
   if (overlay) hide(overlay);
   overlay = id; show(id);
   document.body.classList.remove('riding');
-  requestAnimationFrame(() => $(id).querySelector('button:not(:disabled),input')?.focus({ preventScroll: true }));
+  requestAnimationFrame(() => $(id).querySelector('button:not(:disabled),input,select')?.focus({ preventScroll: true }));
 }
 function closeOverlay(restoreFocus = true) {
   if (overlay === 'leaderboard-overlay') leaderboard.stopWatching();
@@ -141,14 +143,10 @@ function pause() {
   mode = 'paused'; clearInput(); updateStats(); openOverlay('pause-overlay'); save();
 }
 function resume() {
+  if (bike.state.crashed) { restartFromStageOne(); return; }
   mode = 'riding'; closeOverlay(); clearInput(); last = performance.now(); accumulator = 0; previousPose = null; audio.start();
 }
-function rewind() {
-  if (mode === 'intro') return;
-  bike.rewind(); crashShown = false; previousPose = null;
-  mode = 'riding'; closeOverlay(false); clearInput(); hide('trick'); hide('ride-hint');
-  show('rewind-label'); audio.rewind(); last = performance.now(); accumulator = 0;
-}
+function restartFromStageOne() { if (mode !== 'intro') restart(world.seed, 80); }
 function restart(seed = world.seed, x = 80) {
   captureScore(true);
   rankedRun = new RankedRun(seed, x);
@@ -191,6 +189,7 @@ function showLeaderboard() {
 }
 function closeSubpanel() {
   if (previousMode === 'paused') { mode = 'paused'; updateStats(); openOverlay('pause-overlay'); }
+  else if (previousMode === 'crashed') { mode = 'crashed'; openOverlay('crash-overlay'); }
   else { mode = previousMode; closeOverlay(); }
 }
 async function fullscreen() {
@@ -201,6 +200,8 @@ async function fullscreen() {
   } catch { notify('Fullscreen is unavailable in this browser.'); }
 }
 
+$('live-board').addEventListener('click', showLeaderboard);
+$('crash-sign-in').addEventListener('click', () => { showLeaderboard(); if (!leaderboard.user && leaderboard.ready) leaderboard.signIn(); });
 $('leaderboard-button').addEventListener('click', showLeaderboard);
 $('pause-leaderboard').addEventListener('click', showLeaderboard);
 $('ranked-ride').addEventListener('click', () => restart());
@@ -208,7 +209,7 @@ $('close-leaderboard').addEventListener('click', closeSubpanel);
 $('start-button').addEventListener('click', () => startRide());
 $('pause-button').addEventListener('click', pause);
 $('resume-button').addEventListener('click', resume);
-$('rewind-button').addEventListener('click', rewind);
+$('crash-restart-button').addEventListener('click', restartFromStageOne);
 $('restart-button').addEventListener('click', () => restart());
 $('sound-button').addEventListener('click', toggleSound);
 $('fullscreen-button').addEventListener('click', fullscreen);
@@ -245,9 +246,9 @@ for (const side of ['left', 'right']) {
   zone.addEventListener('contextmenu', event => event.preventDefault());
 }
 window.addEventListener('keydown', event => {
-  if (event.target instanceof HTMLInputElement && !['Escape', 'Tab'].includes(event.code)) return;
+  if ((event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) && !['Escape', 'Tab'].includes(event.code)) return;
   if (event.code === 'Tab' && overlay) {
-    const focusables = [...$(overlay).querySelectorAll('button:not(:disabled),input')].filter(el => !el.closest('.hidden'));
+    const focusables = [...$(overlay).querySelectorAll('button:not(:disabled),input,select')].filter(el => !el.closest('.hidden'));
     const first = focusables[0], final = focusables.at(-1);
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); final?.focus(); }
     else if (!event.shiftKey && document.activeElement === final) { event.preventDefault(); first?.focus(); }
@@ -262,7 +263,7 @@ window.addEventListener('keydown', event => {
   if (event.repeat) return;
   if (event.code === 'KeyM') toggleSound();
   if (event.code === 'KeyF') fullscreen();
-  if (event.code === 'KeyR' && mode !== 'intro') { event.preventDefault(); rewind(); }
+  if (event.code === 'KeyR' && mode !== 'intro') { event.preventDefault(); restartFromStageOne(); }
   if (event.code === 'Enter' && mode === 'intro' && !overlay && document.activeElement.tagName !== 'BUTTON') { event.preventDefault(); startRide(); }
   if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'Space', 'KeyA', 'KeyD', 'KeyS'].includes(event.code) && mode === 'riding' && !overlay) { event.preventDefault(); keys.add(event.code); }
 });
@@ -309,7 +310,7 @@ function updateUI() {
     summitSeen = true; summitTimer = 3; mode = 'summit'; clearInput(); announceChapter(7); hide('ride-hint');
   }
   if (s.crashed && !bike.rewinding && s.crashTime > .55 && !crashShown) {
-    crashShown = true; mode = 'crashed'; openOverlay('crash-overlay'); save();
+    crashShown = true; mode = 'crashed'; $('crash-score').textContent = `${s.score.toLocaleString()} points · ${kms(s.distance)} km`;  openOverlay('crash-overlay'); save();
   }
   if (now() > lastSaved + 5) { save(); lastSaved = now(); }
 }
