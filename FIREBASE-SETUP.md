@@ -2,7 +2,11 @@
 
 The game stays on GitHub Pages. Firebase Authentication supplies Google sign-in; Cloud Firestore stores one best run per Google user and streams the top 50. The static game works without either service. Production builds hide the leaderboard entry points while the Firebase config is unset; local development exposes the setup-pending screen. The Firebase SDK loads only when opening the board or restoring a previously signed-in session.
 
-## Connect the backend
+## Current deployment
+
+DUSKRIDE uses the `mugo-db2ea` project and its own web app (`1:587609979262:web:5dfc56fd2a1cc82f981b2f`). Existing apps and authorized domains are preserved. Only `/leaderboards/duskride-v1/players` receives new access; all other Firestore paths retain the original deny-all rule. Original rule snapshots are stored locally in the ignored `.firebase-backup/` directory. The leaderboard index was added individually to avoid deleting any unrelated indexes. Re-read active rules before future deployments to this shared project.
+
+## Connect a different backend
 
 1. Authenticate locally with `npx firebase login` (or `npx firebase login --no-localhost` and follow its account-owner authorization instructions). Never commit login tokens or service-account keys.
 2. Create a new Firebase project and register a web app named DUSKRIDE. Analytics is optional and unused. Create the default Firestore database in production mode; choose its permanent region before creating it.

@@ -33,5 +33,9 @@ service cloud.firestore {
           || (request.resource.data.score == resource.data.score && request.resource.data.distanceMeters > resource.data.distanceMeters));
       allow delete: if owner();
     }
+    // Preserve mugo’s original protection for every other collection.
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
