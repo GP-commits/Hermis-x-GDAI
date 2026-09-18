@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1b272d" />
+  <meta name="description" content="A quiet mountain-bike journey from sunset to sunrise. Find your flow in DUSKRIDE — a free, lightweight browser game." />
+  <title>DUSKRIDE — Find your flow</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main id="game" aria-label="Duskride mountain biking game">
+    <canvas id="landscape" aria-label="Mountain trail. Use D or right arrow to pedal and rotate forward; A or left arrow to brake and rotate backward. Hold space to pump. Escape pauses."></canvas>
+    <div class="grain" aria-hidden="true"></div>
+    <header class="topbar">
+      <a class="wordmark" href="#" id="home-link" aria-label="Duskride, pause ride">
+        <svg viewBox="0 0 40 30" fill="none" aria-hidden="true"><path d="M2 26 16 4l13 22M21 26l9-15 9 15"/><circle cx="31" cy="5" r="3"/></svg>
+        <span>DUSKRIDE</span>
+      </a>
+      <span class="top-caption" id="top-caption">A DOWNHILL DAYDREAM</span>
+      <div class="top-actions">
+        <button class="icon-button" id="sound-button" aria-label="Turn sound on" title="Sound (M)" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none"><path d="m11 5-6 4H2v6h3l6 4V5Z"/><path class="sound-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/><path class="sound-slash" d="m16 9 6 6m0-6-6 6"/></svg></button>
+        <button class="icon-button" id="fullscreen-button" aria-label="Enter fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24" fill="none"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+        <button class="icon-button hidden" id="pause-button" aria-label="Pause ride" title="Pause (Esc)"><svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14M16 5v14"/></svg></button>
+      </div>
+    </header>
+
+    <section class="intro" id="intro" aria-labelledby="game-title">
+      <div class="eyebrow intro-eyebrow"><span></span> FOLLOW THE FADING LIGHT <span></span></div>
+      <h1 id="game-title">DUSKRIDE</h1>
+      <p class="tagline">Find your flow.</p>
+      <p class="intro-description">Just you, two wheels, and a little gravity.</p>
+      <button class="primary-button start-button" id="start-button"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="m7 4 9 6-9 6V4Z"/></svg> <span>Begin the ride</span><span class="button-key">↵</span></button>
+      <span class="sound-note"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 9V7a5 5 0 0 1 10 0v2M2 8h3v6H2zm9 0h3v6h-3z"/></svg> A little better with headphones</span>
+    </section>
+
+    <div id="ride-hud" class="ride-hud hidden" aria-live="off"><span id="distance">0.00 <small>km</small></span><span id="flow-count" class="flow-count"></span></div>
+    <div class="chapter-arrival hidden" id="chapter-arrival" aria-live="polite"><span class="eyebrow" id="arrival-number">CHAPTER 01</span><h2 id="arrival-title">Golden Ridge</h2><p id="arrival-note">Every journey starts with a little gravity.</p></div>
+    <div class="trick hidden" id="trick" aria-live="polite"><span id="trick-label">PERFECT</span><small id="trick-score">+100</small></div>
+    <div class="ride-hint hidden" id="ride-hint">HOLD <kbd>→</kbd> TO PEDAL</div>
+    <div class="rewind-label hidden" id="rewind-label">‹‹ &nbsp; A LITTLE WAY BACK</div>
+
+    <footer class="bottom-bar" id="bottom-bar">
+      <button class="chapter-link" id="journey-button" aria-label="Explore the journey"><span class="chapter-index" id="chapter-index">01</span><span class="chapter-divider"></span><span><span class="eyebrow" id="chapter-name">GOLDEN RIDGE</span><span class="chapter-detail" id="chapter-detail">The beginning of something good.</span></span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
+      <div class="trail-progress" aria-label="Journey progress"><span id="trail-progress-fill"></span><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <button class="controls-link" id="controls-button"><span class="desktop-controls"><kbd>←</kbd><kbd>→</kbd><span>A little control. A lot of freedom.</span></span><span class="mobile-controls">How to ride <span>↗</span></span></button>
+    </footer>
+
+    <div class="touch-zone" id="left-zone" aria-hidden="true"></div><div class="touch-zone" id="right-zone" aria-hidden="true"></div>
+    <div class="touch-hints hidden" id="touch-hints" aria-hidden="true"><span>↶<small>BRAKE / ROTATE</small></span><span>↷<small>PEDAL / ROTATE</small></span></div>
+
+    <section class="overlay hidden" id="pause-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="panel pause-panel"><span class="eyebrow">TAKE YOUR TIME</span><h2 id="pause-title">Catch your breath.</h2><p>The mountain will be right here.</p><div class="ride-stats"><div><strong id="stat-distance">0.00</strong><span>KILOMETRES</span></div><div><strong id="stat-air">0.0s</strong><span>LONGEST AIR</span></div><div><strong id="stat-flips">0</strong><span>FLIPS LANDED</span></div></div><button class="primary-button" id="resume-button">Back to the trail <span>→</span></button><div class="panel-links"><button id="pause-journey">The journey</button><button id="pause-controls">How to ride</button><button id="restart-button">Start fresh</button></div><div class="seed-row"><label for="seed-input">TRAIL SEED</label><div><input id="seed-input" maxlength="32" spellcheck="false" aria-label="Trail seed"/><button id="seed-button" aria-label="Ride this seed">↗</button></div><button id="share-button" title="Copy a link to this trail">Copy trail link</button></div><div class="bike-row"><span>YOUR RIDE</span><button class="bike-option selected" data-bike="mountain" aria-pressed="true">Mountain</button><button class="bike-option" data-bike="hardtail" aria-pressed="false">Hardtail <small>1 km</small></button><button class="bike-option" data-bike="tiny" aria-pressed="false">Tiny bike <small>2 km</small></button></div></div>
+    </section>
+
+    <section class="overlay hidden" id="crash-overlay" role="dialog" aria-modal="true" aria-labelledby="crash-title"><div class="panel crash-panel"><span class="rewind-symbol">‹‹</span><h2 id="crash-title">Find that flow again.</h2><p>Just a moment back. You’ve got this.</p><button class="primary-button" id="rewind-button">Rewind the ride <span>↶</span></button><span class="small-note">TAP TO REWIND · OR PRESS R</span></div></section>
+
+    <section class="overlay hidden" id="controls-overlay" role="dialog" aria-modal="true" aria-labelledby="controls-title"><div class="panel controls-panel"><button class="close-button" id="close-controls" aria-label="Close controls">×</button><span class="eyebrow">LESS THINKING. MORE RIDING.</span><h2 id="controls-title">Go with the mountain.</h2><div class="control-rows"><div><span><kbd>→</kbd> <em>or</em> <kbd>D</kbd></span><p><strong>Find your momentum</strong>Pedal on the trail. Rotate forward in the air.</p></div><div><span><kbd>←</kbd> <em>or</em> <kbd>A</kbd></span><p><strong>Take it easy</strong>Brake on the trail. Rotate backward in the air.</p></div><div><span><kbd class="wide-key">SPACE</kbd></span><p><strong>Feel the terrain</strong>Hold to pump downhill. Release on the rise.</p></div></div><p class="touch-instruction">On a phone, hold the right or left half of the screen. Hold both to pump. Lift your thumbs to coast.</p><p class="control-extra">Land with your wheels along the slope. Let go in the air for a little help. <span>R — rewind &nbsp; · &nbsp; Esc — pause &nbsp; · &nbsp; M — sound</span></p><button class="primary-button" id="controls-done">I’ve got it <span>→</span></button></div></section>
+
+    <section class="overlay hidden" id="journey-overlay" role="dialog" aria-modal="true" aria-labelledby="journey-title"><div class="panel journey-panel"><button class="close-button" id="close-journey" aria-label="Close journey">×</button><span class="eyebrow">ONE MOUNTAIN. A WORLD WITHIN.</span><h2 id="journey-title">Chase the horizon.</h2><p>Eight places to get a little lost. Discover them as you ride.</p><div id="chapter-list" class="chapter-list"></div><div class="journey-end"><span>☀</span> And when the sun returns, the journey goes on.</div></div></section>
+    <div class="toast hidden" id="toast" role="status"></div>
+    <noscript><div class="no-script">DUSKRIDE needs JavaScript to bring the mountain to life. Enable it and reload to ride.</div></noscript>
+  </main>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
