@@ -1,4 +1,5 @@
 import { RiderRig } from './rider.js';
+import { RiderSprite } from './rider-sprite.js';
 import { CHAPTERS, CHAPTER_LENGTH, clamp, lerp, smooth, random, hashSeed } from './world.js';
 import { WHEEL_BASE, WHEEL_RADIUS } from './physics.js';
 
@@ -21,6 +22,7 @@ export class Scene {
     this.flash = 0;
     this.bikeStyle = 'mountain';
     this.riderRig = new RiderRig();
+    this.riderSprite = new RiderSprite();
     this.pedalAngle = 0;
     this.lastBikeX = null;
     this.mobile = matchMedia('(pointer: coarse)').matches;
@@ -338,6 +340,7 @@ export class Scene {
     const wheelPhase = s.x / WHEEL_RADIUS;
     c.strokeStyle = '#101c23'; c.fillStyle = '#101c23'; c.lineCap = 'round'; c.lineJoin = 'round';
     if (s.crashed) { c.rotate(Math.min(s.crashTime * 1.5, 1)); }
+    if (this.riderSprite?.draw(c, pose, s)) { c.restore(); return; }
     for (const x of [-half, half]) {
       c.lineWidth = 2.4; c.beginPath(); c.arc(x, 7, wheel, 0, TAU); c.stroke();
       c.lineWidth = .55; c.globalAlpha = .7;

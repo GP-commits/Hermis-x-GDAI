@@ -35,7 +35,7 @@ export class RiderRig {
     const nearAnkle = [crank[0] + pedal[0] - 2, crank[1] + pedal[1] - 2 - slump * 5];
     const farAnkle = [crank[0] - pedal[0] - 2, crank[1] - pedal[1] - 2 - slump * 2];
     const farHip = [hip[0] - 1, hip[1]];
-    return this.lastPose = { phase: this.phase, crank, pedal, compression, hip, shoulder, hand, nearAnkle, farAnkle, farHip,
+    return this.lastPose = { phase: this.phase, crouch: this.crouch, lean: this.lean, crank, pedal, compression, hip, shoulder, hand, nearAnkle, farAnkle, farHip,
       nearKnee: jointBetween(hip, nearAnkle, 16.5, 17.5), farKnee: jointBetween(farHip, farAnkle, 16.5, 17.5),
       elbow: jointBetween(shoulder, hand, 13, 16, -1),
       head: [shoulder[0] + 5.2, shoulder[1] - 7.4], headTilt: .08 + slump * .5,
