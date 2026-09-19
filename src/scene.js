@@ -30,6 +30,10 @@ export class Scene {
     this.mountainCache = [];
     this.skyCache = null;
     this.sunCache = null;
+    this.landscapeArt = new Image();
+    this.landscapeArtReady = false;
+    this.landscapeArt.onload = () => { this.landscapeArtReady = true; };
+    this.landscapeArt.src = new URL('../assets/backgrounds/emerald-mountains.png', import.meta.url).href;
     this.pendingRenderScale = null;
     this.renderCost = 0;
     this.renderSamples = 0;
@@ -153,6 +157,7 @@ export class Scene {
       this.skyCache = { canvas, key: p.cacheKey };
     }
     c.drawImage(this.skyCache.canvas, 0, 0, w, h);
+    if (this.landscapeArtReady) this.drawLandscapeArt(p);
     if (p.night > .01) {
       for (const star of this.stars) {
         c.globalAlpha = p.night * (.25 + .35 * star.a + Math.sin(this.time * .5 + star.x * 40) * .12);
@@ -189,7 +194,27 @@ export class Scene {
     const ridges = noise(u * 2.8 + layer * 31) * .59 + noise(u * 7.5 + layer * 29) * .27 + noise(u * 24 + layer * 17) * .10 + noise(u * 70 + layer * 23) * .04;
     return base - ridges * height;
   }
+  drawLandscapeArt(p) {
+    const { ctx: c, w, h, landscapeArt: art } = this;
+    // Cover both portrait and landscape with a single decoded texture. Overscan
+    // permits slow parallax without tiled seams or uncovered screen edges.
+    const scale = Math.max(w * 1.15 / art.naturalWidth, h / art.naturalHeight);
+    const sourceWidth = w / scale, sourceHeight = h / scale;
+    const travel = this.reducedMotion ? .5 : .5 + Math.sin(this.camera.x * .000018) * .42;
+    const sourceX = (art.naturalWidth - sourceWidth) * travel;
+    const sourceY = (art.naturalHeight - sourceHeight) * .42;
+    c.drawImage(art, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, w, h);
+    // Preserve biome changes on top of the campaign artwork without expensive
+    // per-frame image filters. Existing animated weather remains a separate pass.
+    c.save();
+    c.fillStyle = '#06150d'; c.globalAlpha = p.night * .24 + p.rain * .08;
+    c.fillRect(0, 0, w, h);
+    c.fillStyle = p.sky[2]; c.globalAlpha = p.fog * .16;
+    c.fillRect(0, 0, w, h);
+    c.restore();
+  }
   drawMountains(p, s) {
+    if (this.landscapeArtReady) return;
     const c = this.ctx, { w, h } = this;
     const margin = 96;
     for (let i = 0; i < 5; i++) {
