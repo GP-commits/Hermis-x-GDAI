@@ -114,7 +114,7 @@ export class LeaderboardService extends EventTarget {
   async saveProfile(value) {
     if (!this.user || this.profileSaving || this.profileLoading) return;
     const profile = { name: displayName(value.name.trim()), department: value.department.trim().normalize('NFKC'), year: Number(value.year) };
-    if (!value.name.trim() || !validProfile(profile)) { this.profileError = 'Enter your name, department, and year (1–6).'; this.emit(); return; }
+    if (!value.name.trim() || !validProfile(profile) || profile.year > 5) { this.profileError = 'Enter your name, department, and year (1–5).'; this.emit(); return; }
     const uid = this.user.uid; this.profileSaving = true; this.profileError = ''; this.emit();
     try {
       const { doc, runTransaction, serverTimestamp } = this.storeSDK;

@@ -4,7 +4,7 @@ import { CHAPTERS, CHAPTER_LENGTH, clamp, lerp, smooth, random, hashSeed } from 
 import { WHEEL_BASE, WHEEL_RADIUS } from './physics.js';
 
 const TAU = Math.PI * 2;
-const INK = '#111e25';
+const INK = '#0c1911';
 const rgb = hex => [1, 3, 5].map(n => parseInt(hex.slice(n, n + 2), 16));
 const blend = (a, b, t) => { const aa = rgb(a), bb = rgb(b); return `rgb(${aa.map((v, i) => Math.round(lerp(v, bb[i], t))).join(',')})`; };
 const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -115,14 +115,14 @@ export class Scene {
     if (p.rain > .01) this.drawRain(p.rain, s);
     if (this.world.inTunnel(s.x)) {
       const vignette = c.createRadialGradient(w * .4, h * .6, 30, w * .4, h * .6, Math.max(w, h) * .7);
-      vignette.addColorStop(0, '#0e1b2110'); vignette.addColorStop(1, '#07141bd9');
+      vignette.addColorStop(0, '#0d1b1310'); vignette.addColorStop(1, '#07140cd9');
       c.fillStyle = vignette; c.fillRect(0, 0, w, h);
     }
     const shade = c.createLinearGradient(0, h * .82, 0, h);
-    shade.addColorStop(0, '#101d2400'); shade.addColorStop(1, '#101d2470');
+    shade.addColorStop(0, '#0e1c1300'); shade.addColorStop(1, '#0e1c1370');
     c.fillStyle = shade; c.fillRect(0, h * .82, w, h * .18);
-    if (rewinding) { c.fillStyle = '#bfdede13'; c.fillRect(0, 0, w, h); }
-    if (this.flash > 0) { c.globalAlpha = this.flash; c.fillStyle = '#eff3e4'; c.fillRect(0, 0, w, h); c.globalAlpha = 1; this.flash = Math.max(0, this.flash - dt * 2); }
+    if (rewinding) { c.fillStyle = '#d3eadb13'; c.fillRect(0, 0, w, h); }
+    if (this.flash > 0) { c.globalAlpha = this.flash; c.fillStyle = '#f3f7f4'; c.fillRect(0, 0, w, h); c.globalAlpha = 1; this.flash = Math.max(0, this.flash - dt * 2); }
     this.renderCost += performance.now() - renderStart;
     this.renderSamples++; this.sampleTime += dt;
     if (this.sampleTime >= 1 && this.renderSamples >= 12) {
@@ -156,7 +156,7 @@ export class Scene {
     if (p.night > .01) {
       for (const star of this.stars) {
         c.globalAlpha = p.night * (.25 + .35 * star.a + Math.sin(this.time * .5 + star.x * 40) * .12);
-        c.fillStyle = '#f6ead7'; c.beginPath(); c.arc(star.x * w, star.y * h, star.r, 0, TAU); c.fill();
+        c.fillStyle = '#f4f8f5'; c.beginPath(); c.arc(star.x * w, star.y * h, star.r, 0, TAU); c.fill();
       }
       c.globalAlpha = 1;
     }
@@ -170,12 +170,12 @@ export class Scene {
       canvas.width = canvas.height = size;
       const context = canvas.getContext('2d'), center = size / 2;
       const glow = context.createRadialGradient(center, center, r * .7, center, center, r * 3.8);
-      glow.addColorStop(0, p.night > .5 ? '#d8e8da18' : '#ffdcac30'); glow.addColorStop(1, '#ffdfbb00');
+      glow.addColorStop(0, p.night > .5 ? '#c6edcf24' : '#b3eac43c'); glow.addColorStop(1, '#b3eac400');
       context.fillStyle = glow; context.fillRect(0, 0, size, size);
       context.fillStyle = p.sun; context.globalAlpha = .9 - p.fog * .45;
       context.beginPath(); context.arc(center, center, r, 0, TAU); context.fill();
-      if (p.night > .5) {
-        context.fillStyle = '#7c899217';
+      { // A pale textured moon keeps every chapter in the campaign's forest palette.
+        context.fillStyle = '#57756112';
         for (let i = 0; i < 9; i++) { context.beginPath(); context.arc(center + (hash(i + 90) - .5) * r * 1.3, center + (hash(i + 10) - .5) * r * 1.3, 3 + hash(i + 44) * r * .19, 0, TAU); context.fill(); }
       }
       this.sunCache = { canvas, key: sunKey, size };
@@ -246,7 +246,7 @@ export class Scene {
       }
     }
     const haze = c.createLinearGradient(0, base - h * .12, 0, base + h * .055);
-    haze.addColorStop(0, '#e7c3b400'); haze.addColorStop(1, `rgba(213,184,178,${.12 + p.fog * .10})`);
+    haze.addColorStop(0, '#c4d8ca00'); haze.addColorStop(1, `rgba(190,213,196,${.12 + p.fog * .10})`);
     c.fillStyle = haze; c.fillRect(left, base - h * .12, right - left, h * .2);
   }
   drawAtmosphere(p, s) {
@@ -255,7 +255,7 @@ export class Scene {
       for (let i = 0; i < 3; i++) {
         const y = h * (.54 + i * .105) + Math.sin(this.time * .05 + i) * 10;
         const fog = c.createLinearGradient(0, y - 38, 0, y + 38);
-        fog.addColorStop(0, '#ccd3c600'); fog.addColorStop(.5, `rgba(204,211,198,${p.fog * .20})`); fog.addColorStop(1, '#ccd3c600');
+        fog.addColorStop(0, '#cbd9cf00'); fog.addColorStop(.5, `rgba(203,217,207,${p.fog * .20})`); fog.addColorStop(1, '#cbd9cf00');
         c.fillStyle = fog; c.fillRect(0, y - 38, w, 76);
       }
     }
@@ -271,7 +271,7 @@ export class Scene {
   }
   drawBirds(cx, cy, alpha) {
     const c = this.ctx;
-    c.strokeStyle = '#464f59'; c.lineWidth = 1.15; c.globalAlpha = .5 * alpha;
+    c.strokeStyle = '#46574c'; c.lineWidth = 1.15; c.globalAlpha = .5 * alpha;
     for (let i = 0; i < 5; i++) {
       const x = cx + i * 21 + Math.sin(this.time * .08) * 24, y = cy + Math.sin(i * 1.9) * 15;
       const flap = Math.sin(this.time * 2 + i) * 2;
@@ -297,7 +297,7 @@ export class Scene {
       const x = index * 105 + hash(index + 71) * 65;
       const y = this.world.height(x);
       if (x < 165 && x > -60) continue;
-      if (hash(index + 933) < p.trees * .37) this.pine(x, y + 4, 45 + hash(index + 45) * 100, '#192a31');
+      if (hash(index + 933) < p.trees * .37) this.pine(x, y + 4, 45 + hash(index + 45) * 100, '#14281b');
       else if (hash(index + 440) > .53) {
         const size = 4 + hash(index + 941) * 8;
         c.fillStyle = INK; c.beginPath(); c.moveTo(x - size, y + 2); c.lineTo(x - size * .65, y - size * .44); c.lineTo(x + size * .14, y - size * .65); c.lineTo(x + size * .75, y - size * .3); c.lineTo(x + size, y + 3); c.fill();
@@ -309,7 +309,7 @@ export class Scene {
     c.lineTo(right, this.world.height(right)); c.lineTo(right, bottom); c.closePath(); c.fill();
     c.beginPath();
     for (let x = left; x <= right; x += 5) { const y = this.world.height(x); if (x === left) c.moveTo(x, y); else c.lineTo(x, y); }
-    c.strokeStyle = '#d4b39835'; c.lineWidth = .85 / cam.scale; c.stroke();
+    c.strokeStyle = '#b6d7c135'; c.lineWidth = .85 / cam.scale; c.stroke();
     c.strokeStyle = INK; c.lineWidth = 1;
     for (let i = Math.floor(left / 13); i < right / 13; i++) {
       if (hash(i + 430) < .27) continue;
@@ -317,7 +317,7 @@ export class Scene {
       c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 1, y - size * .8, x - 2 + Math.sin(this.time * 1.4 + i) * 2, y - size); c.moveTo(x, y); c.lineTo(x + 4, y - size * .65); c.stroke();
     }
     // Subtle strata keep the foreground from feeling like a flat black panel.
-    c.strokeStyle = '#6671770b'; c.lineWidth = 1;
+    c.strokeStyle = '#64766a0b'; c.lineWidth = 1;
     for (let j = 1; j <= 3; j++) {
       c.beginPath();
       for (let x = left; x <= right; x += 20) {
@@ -390,7 +390,7 @@ export class Scene {
     this.particles = this.particles.filter(particle => particle.life > 0);
     for (const particle of this.particles) {
       if (!stopped) { particle.x += particle.vx * dt; particle.y += particle.vy * dt; particle.vy += 55 * dt; particle.life -= dt; }
-      c.globalAlpha = particle.life / particle.max * .4; c.fillStyle = p.rain > .5 ? '#b7d6d0' : '#c5a58a'; c.beginPath(); c.arc(particle.x, particle.y, particle.size, 0, TAU); c.fill();
+      c.globalAlpha = particle.life / particle.max * .4; c.fillStyle = p.rain > .5 ? '#d6e8dc' : '#a9c7b3'; c.beginPath(); c.arc(particle.x, particle.y, particle.size, 0, TAU); c.fill();
     }
     c.globalAlpha = 1;
   }
@@ -400,14 +400,14 @@ export class Scene {
   drawForeground(p, s) {
     const c = this.ctx, { w, h } = this;
     // Close grass moves faster than the distant ridgelines.
-    c.fillStyle = '#101b22';
+    c.fillStyle = '#0b1810';
     c.beginPath(); c.moveTo(0, h);
     for (let x = 0; x <= w + 15; x += 15) c.lineTo(x, h * .97 + noise((x + s.x * .6) / 160) * h * .04);
     c.lineTo(w + 15, h); c.closePath(); c.fill();
     const shift = ((s.x * .9) % 260 + 260) % 260;
     for (let i = -1; i < w / 260 + 1; i++) {
       const x = i * 260 - shift, y = h + 3;
-      c.strokeStyle = '#0f1b21'; c.lineWidth = 1.5;
+      c.strokeStyle = '#09160e'; c.lineWidth = 1.5;
       for (let j = 0; j < 6; j++) {
         const size = 13 + hash(i * 6 + j) * 25;
         c.beginPath(); c.moveTo(x + j * 3, y); c.quadraticCurveTo(x + j * 4 + s.vx * .025, y - size * .6, x + j * 6 + s.vx * .04, y - size); c.stroke();
@@ -416,7 +416,7 @@ export class Scene {
   }
   drawRain(amount, s) {
     const c = this.ctx, { w, h } = this;
-    c.strokeStyle = '#d1e2db'; c.globalAlpha = amount * .2; c.lineWidth = .65;
+    c.strokeStyle = '#e0ece4'; c.globalAlpha = amount * .2; c.lineWidth = .65;
     for (let i = 0; i < 100 * amount; i++) {
       const x = ((hash(i + 713) * w - this.time * (90 + s.vx * .25)) % w + w) % w;
       const y = (hash(i + 816) * h + this.time * (280 + hash(i) * 150)) % h;
@@ -434,7 +434,7 @@ export class Scene {
       c.fillStyle = INK; c.strokeStyle = INK; c.lineWidth = 3;
       if (type === 'cabin' && !front) {
         c.fillRect(x, y - 42, 65, 44); c.beginPath(); c.moveTo(x - 10, y - 39); c.lineTo(x + 29, y - 68); c.lineTo(x + 73, y - 39); c.fill();
-        c.fillRect(x + 48, y - 67, 8, 25); c.fillStyle = '#b5a180'; c.globalAlpha = .22; c.fillRect(x + 11, y - 30, 11, 14); c.globalAlpha = 1;
+        c.fillRect(x + 48, y - 67, 8, 25); c.fillStyle = '#b5d9bf'; c.globalAlpha = .22; c.fillRect(x + 11, y - 30, 11, 14); c.globalAlpha = 1;
       }
       if (type === 'bridge' && !front) {
         c.lineWidth = 2; c.beginPath();
@@ -449,7 +449,7 @@ export class Scene {
         c.globalAlpha = .22; c.fillRect(x - 5, y - 80, 7, 85); c.fillRect(x + width - 3, endY - 80, 7, 85); c.globalAlpha = 1;
       }
       if (type === 'waterfall' && !front) {
-        c.fillStyle = '#b9c9c13b'; c.fillRect(x + 50, y - 230, 17, 200); c.fillStyle = '#d1d8ca29'; c.fillRect(x + 57, y - 225, 4, 196);
+        c.fillStyle = '#c9dfd03b'; c.fillRect(x + 50, y - 230, 17, 200); c.fillStyle = '#e2ece529'; c.fillRect(x + 57, y - 225, 4, 196);
         for (let i = 0; i < 9; i++) { c.globalAlpha = .07; c.beginPath(); c.ellipse(x + 55 + Math.sin(i) * 18, y - 20 + Math.cos(i) * 7, 13, 8, 0, 0, TAU); c.fill(); } c.globalAlpha = 1;
       }
     }

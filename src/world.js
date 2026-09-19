@@ -2,14 +2,14 @@ export const CHAPTER_LENGTH = 6600;
 export const JOURNEY_LENGTH = CHAPTER_LENGTH * 8;
 export const METERS_PER_UNIT = 0.075;
 export const CHAPTERS = [
-  { name: 'Golden Ridge', note: 'Every journey starts with a little gravity.', short: 'Follow the fading light', sky: ['#556c7c', '#b6a3a3', '#efb090', '#f8d2a0'], layers: ['#b49999', '#a38486', '#856e7a', '#655765', '#39444b'], sun: '#ffe3ab', trees: 0.12, fog: 0, rain: 0 },
-  { name: 'Pine Valley', note: 'Let the mountain carry you.', short: 'Between the evergreens', sky: ['#435568', '#978898', '#d8a3a0', '#edb496'], layers: ['#a28b9d', '#87788d', '#68687e', '#475469', '#283e47'], sun: '#f8d7ba', trees: 1, fog: 0.06, rain: 0 },
-  { name: 'Mist Forest', note: 'Breathe in. Find your rhythm.', short: 'A softer kind of silence', sky: ['#677981', '#8a9a9e', '#b5b9b0', '#ced0b9'], layers: ['#a5b5b2', '#8fa4a4', '#738f95', '#516f7a', '#2e4a56'], sun: '#e5dfc8', trees: 1.3, fog: 0.65, rain: 0 },
-  { name: 'Broken Trail', note: 'Sometimes the way down is another way forward.', short: 'Take the path you find', sky: ['#424e68', '#6c708d', '#a38f9f', '#c8a6a4'], layers: ['#8c849d', '#736f8e', '#5a5c7a', '#3b465f', '#253747'], sun: '#e4ced0', trees: 0.35, fog: 0.12, rain: 0 },
-  { name: 'Moonlit Cliffs', note: 'A little closer to the stars.', short: 'Leave the earth behind', sky: ['#17283f', '#293d59', '#56647b', '#9a949b'], layers: ['#606880', '#4c5875', '#3b4965', '#293b55', '#182d40'], sun: '#e6e8d5', trees: 0.18, fog: 0.05, rain: 0 },
-  { name: 'The Rain', note: 'There is no hurry. Even here.', short: 'A rhythm of its own', sky: ['#1e303e', '#344957', '#5f7680', '#9bacac'], layers: ['#697e8b', '#566b7b', '#41576c', '#2c4358', '#192f3f'], sun: '#c5d5d2', trees: 0.8, fog: 0.4, rain: 1 },
-  { name: 'Ancient Trail', note: 'Other journeys have passed this way.', short: 'Stories without words', sky: ['#242d45', '#44425d', '#807589', '#b9a09e'], layers: ['#877c97', '#6d6b88', '#555a79', '#39465f', '#243549'], sun: '#ece1c9', trees: 0.8, fog: 0.15, rain: 0 },
-  { name: 'The Summit', note: 'Look how far you have come.', short: 'The light returns', sky: ['#687786', '#bba3a7', '#f1bca3', '#ffe0ac'], layers: ['#ba9caa', '#a28699', '#826e84', '#5c566b', '#36414e'], sun: '#fff0c7', trees: 0.16, fog: 0.1, rain: 0 },
+  { name: 'Golden Ridge', note: 'Every journey starts with a little gravity.', short: 'Follow the fading light', sky: ['#343c39', '#626e67', '#95a99b', '#b7cbbd'], layers: ['#828c86', '#657b6f', '#416b57', '#2b503e', '#172e24'], sun: '#f3f7f4', trees: 0.12, fog: 0, rain: 0 },
+  { name: 'Pine Valley', note: 'Let the mountain carry you.', short: 'Between the evergreens', sky: ['#29342e', '#52675b', '#83a18c', '#adc4b2'], layers: ['#778a7d', '#537660', '#355f49', '#234733', '#122b1e'], sun: '#f3f7f4', trees: 1, fog: 0.06, rain: 0 },
+  { name: 'Mist Forest', note: 'Breathe in. Find your rhythm.', short: 'A softer kind of silence', sky: ['#56615b', '#809187', '#afbeb4', '#d0d9d2'], layers: ['#a0b3a6', '#7e9a88', '#5b8069', '#3a624b', '#203f2e'], sun: '#f3f7f4', trees: 1.3, fog: 0.65, rain: 0 },
+  { name: 'Broken Trail', note: 'Sometimes the way down is another way forward.', short: 'Take the path you find', sky: ['#252e29', '#45584b', '#708877', '#a3b5a8'], layers: ['#77867d', '#5d7464', '#405e4b', '#2a4434', '#182d21'], sun: '#f3f7f4', trees: 0.35, fog: 0.12, rain: 0 },
+  { name: 'Moonlit Cliffs', note: 'A little closer to the stars.', short: 'Leave the earth behind', sky: ['#141d18', '#263a2e', '#496251', '#829689'], layers: ['#566e5f', '#3d5848', '#2c4637', '#203628', '#12251a'], sun: '#f3f7f4', trees: 0.18, fog: 0.05, rain: 0 },
+  { name: 'The Rain', note: 'There is no hurry. Even here.', short: 'A rhythm of its own', sky: ['#28322e', '#46574e', '#708579', '#a2b4aa'], layers: ['#6e8377', '#526e5e', '#395543', '#294032', '#182c21'], sun: '#f3f7f4', trees: 0.8, fog: 0.4, rain: 1 },
+  { name: 'Ancient Trail', note: 'Other journeys have passed this way.', short: 'Stories without words', sky: ['#202e25', '#3b5041', '#6a8771', '#a1b8a8'], layers: ['#728d7b', '#526f5d', '#395641', '#273f2d', '#162b1d'], sun: '#f3f7f4', trees: 0.8, fog: 0.15, rain: 0 },
+  { name: 'The Summit', note: 'Look how far you have come.', short: 'The light returns', sky: ['#414d45', '#7d9484', '#b2c9b8', '#e0e9e2'], layers: ['#93a79a', '#718e79', '#4d725b', '#32533e', '#1c3627'], sun: '#f3f7f4', trees: 0.16, fog: 0.1, rain: 0 },
 ];
 
 export function hashSeed(seed) {
