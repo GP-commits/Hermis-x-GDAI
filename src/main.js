@@ -331,7 +331,8 @@ function frame(timestamp) {
     }
   } else accumulator = 0;
   if (mode === 'summit') { summitTimer -= dt; if (summitTimer <= 0) { mode = 'riding'; bike.state.vx = Math.max(bike.state.vx, 135); } }
-  const renderState = { ...bike.state, pedaling: mode === 'riding' && input().right };
+  const ridingInput = input();
+  const renderState = { ...bike.state, pedaling: mode === 'riding' && ridingInput.right, pumping: mode === 'riding' && ridingInput.pump, braking: mode === 'riding' && ridingInput.left };
   if (mode === 'riding' && previousPose && !bike.state.crashed) {
     const alpha = clamp(accumulator / STEP, 0, 1);
     for (const key of ['x', 'y', 'angle', 'vx', 'vy', 'omega']) renderState[key] = lerp(previousPose[key], bike.state[key], alpha);

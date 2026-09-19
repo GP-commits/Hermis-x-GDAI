@@ -1,3 +1,4 @@
+import { RiderRig } from './rider.js';
 import { CHAPTERS, CHAPTER_LENGTH, clamp, lerp, smooth, random, hashSeed } from './world.js';
 import { WHEEL_BASE, WHEEL_RADIUS } from './physics.js';
 
@@ -7,15 +8,6 @@ const rgb = hex => [1, 3, 5].map(n => parseInt(hex.slice(n, n + 2), 16));
 const blend = (a, b, t) => { const aa = rgb(a), bb = rgb(b); return `rgb(${aa.map((v, i) => Math.round(lerp(v, bb[i], t))).join(',')})`; };
 const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 function noise(x) { const i = Math.floor(x), t = smooth(x - i); return lerp(hash(i), hash(i + 1), t); }
-function kneeBetween(hip, ankle) {
-  const dx = ankle[0] - hip[0], dy = ankle[1] - hip[1];
-  const distance = Math.max(.001, Math.hypot(dx, dy));
-  const reach = Math.min(distance, 33.99), thigh = 16.5, shin = 17.5;
-  const along = (thigh * thigh - shin * shin + reach * reach) / (2 * reach);
-  const bend = Math.sqrt(Math.max(0, thigh * thigh - along * along));
-  // Both human knees bend toward the handlebars, including the far leg.
-  return [hip[0] + dx / distance * along + dy / distance * bend, hip[1] + dy / distance * along - dx / distance * bend];
-}
 
 export class Scene {
   constructor(canvas, world) {
@@ -28,6 +20,7 @@ export class Scene {
     this.time = 0;
     this.flash = 0;
     this.bikeStyle = 'mountain';
+    this.riderRig = new RiderRig();
     this.pedalAngle = 0;
     this.lastBikeX = null;
     this.mobile = matchMedia('(pointer: coarse)').matches;
@@ -66,7 +59,7 @@ export class Scene {
     this.skyCache = null;
     this.sunCache = null;
   }
-  setWorld(world) { this.world = world; this.initialized = false; this.particles.length = 0; this.mountainCache = []; this.skyCache = null; this.lastBikeX = null; this.pedalAngle = 0; }
+  setWorld(world) { this.world = world; this.initialized = false; this.particles.length = 0; this.mountainCache = []; this.skyCache = null; this.lastBikeX = null; this.pedalAngle = 0; this.riderRig = new RiderRig(); }
   palette(x) {
     const i = this.world.chapterAt(x);
     const t = smooth(clamp((x % CHAPTER_LENGTH) / CHAPTER_LENGTH * 5 - 4, 0, 1));
@@ -98,7 +91,7 @@ export class Scene {
       this.resize(); this.initialized = cameraReady;
     }
     const renderStart = performance.now();
-    this.frameDelta = dt;
+    this.frameDelta = paused || intro ? 0 : dt;
     this.time += paused ? dt * .1 : dt;
     this.updateCamera(s, dt, intro);
     const c = this.ctx, { w, h } = this;
@@ -338,17 +331,11 @@ export class Scene {
     const tiny = this.bikeStyle === 'tiny';
     if (tiny) { c.translate(0, 17 * .16); c.scale(.84, .84); }
     const wheel = WHEEL_RADIUS, half = WHEEL_BASE / 2;
-    const pedaling = s.grounded && s.pedaling && !intro;
-    const travel = this.lastBikeX === null ? 0 : s.x - this.lastBikeX;
-    this.lastBikeX = s.x;
-    if (pedaling) this.pedalAngle += travel * .065;
-    else {
-      const level = Math.round(this.pedalAngle / Math.PI) * Math.PI;
-      this.pedalAngle += (level - this.pedalAngle) * (1 - Math.exp(-(this.frameDelta || 0) * 8));
-    }
-    const phase = this.pedalAngle, wheelPhase = s.x / WHEEL_RADIUS;
-    const compression = s.compression * .55;
-    const crouch = s.grounded ? compression : 2;
+    this.riderRig ??= new RiderRig();
+    const pose = this.riderRig.update(s, this.frameDelta, intro);
+    const { phase, crank, pedal, compression, hip, farHip, shoulder, hand, nearAnkle, farAnkle } = pose;
+    this.pedalAngle = phase;
+    const wheelPhase = s.x / WHEEL_RADIUS;
     c.strokeStyle = '#101c23'; c.fillStyle = '#101c23'; c.lineCap = 'round'; c.lineJoin = 'round';
     if (s.crashed) { c.rotate(Math.min(s.crashTime * 1.5, 1)); }
     for (const x of [-half, half]) {
@@ -357,17 +344,13 @@ export class Scene {
       for (let j = 0; j < 6; j++) { const a = wheelPhase + j * TAU / 6; c.beginPath(); c.moveTo(x, 7); c.lineTo(x + Math.cos(a) * 8.4, 7 + Math.sin(a) * 8.4); c.stroke(); }
       c.globalAlpha = 1; c.beginPath(); c.arc(x, 7, 1.5, 0, TAU); c.fill();
     }
-    const seat = [-9, -9 + compression], crank = [-2, 6], stem = [13, -12 + compression];
+    const seat = [-9, -9 + compression], stem = [13, -12 + compression];
     const path = (points, width) => { c.lineWidth = width; c.beginPath(); points.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.stroke(); };
-    const pedalX = Math.cos(phase) * 5, pedalY = Math.sin(phase) * 5;
-    const hip = [-10, -20 + crouch], shoulder = [2, -33 + crouch];
-    const farHip = [hip[0] - 1, hip[1]];
-    const farAnkle = [crank[0] - pedalX - 2, crank[1] - pedalY - 2];
-    const nearAnkle = [crank[0] + pedalX - 2, crank[1] + pedalY - 2];
+    const [pedalX, pedalY] = pedal;
     const shoe = ankle => path([[ankle[0] - 1, ankle[1] + 1], [ankle[0] + 4, ankle[1] + 1]], 2.5);
     // Paint the far leg behind the frame, with the near leg in front of it.
     c.globalAlpha = .72;
-    path([farHip, kneeBetween(farHip, farAnkle), farAnkle], 3.2); shoe(farAnkle);
+    path([farHip, pose.farKnee, farAnkle], 3.8); shoe(farAnkle);
     c.globalAlpha = 1;
     path([[-half, 7], seat, crank, [-half, 7]], 2.1);
     path([seat, stem, crank, seat], 2.3);
@@ -375,19 +358,27 @@ export class Scene {
     path([seat, [-10, -13 + compression], [-15, -13 + compression], [-6, -13 + compression]], 2);
     if (this.bikeStyle !== 'hardtail') path([[-8, 1], [4, -4]], 2.5);
     path([[crank[0] - pedalX, crank[1] - pedalY], [crank[0] + pedalX, crank[1] + pedalY]], 1.6);
-    // A connected rider rig: hips, bent legs, back, shoulders, elbows, helmet.
-    path([hip, kneeBetween(hip, nearAnkle), nearAnkle], 4); shoe(nearAnkle);
-    path([hip, [-7, -27 + crouch], shoulder], 6.1);
-    path([shoulder, [11, -26 + crouch], [16, -16 + compression]], 3.1);
-    path([shoulder, [5, -36 + crouch]], 3.2);
-    c.beginPath(); c.ellipse(7, -39 + crouch, 4.8, 5.2, -.2, 0, TAU); c.fill();
-    c.beginPath(); c.ellipse(6.5, -41 + crouch, 5.8, 3.8, -.18, Math.PI, TAU); c.fill();
-    path([[8, -42 + crouch], [14, -40 + crouch]], 1.7);
-    // A single, restrained fabric accent catches the wind.
-    if (this.bikeStyle !== 'tiny') {
-      c.strokeStyle = '#c18e76'; c.lineWidth = 1.45;
-      c.beginPath(); c.moveTo(3, -34 + crouch); c.quadraticCurveTo(-6, -35 + Math.sin(this.time * 7) * 1.7, -15, -32 + Math.sin(this.time * 5) * 2.5); c.stroke();
-    }
+    // Far arm, then a filled shirt/shorts silhouette, small pack and near limbs.
+    c.globalAlpha = .78;
+    path([[shoulder[0] - 2, shoulder[1]], [pose.elbow[0] - 2, pose.elbow[1]], [hand[0] - 1, hand[1]]], 3);
+    c.globalAlpha = 1;
+    c.beginPath(); c.moveTo(hip[0] - 3, hip[1] + 1);
+    c.bezierCurveTo(hip[0] - 6, hip[1] - 8, shoulder[0] - 7, shoulder[1] - 3, shoulder[0], shoulder[1] - 3);
+    c.quadraticCurveTo(shoulder[0] + 5, shoulder[1] - 1, shoulder[0] + 3, shoulder[1] + 4);
+    c.lineTo(hip[0] + 5, hip[1] + 3); c.closePath(); c.fill();
+    // Compact backpack follows the spine rather than floating behind the rider.
+    c.save(); c.translate((hip[0] + shoulder[0]) * .5 - 4, (hip[1] + shoulder[1]) * .5 - 3 + pose.packSway); c.rotate(.62);
+    c.beginPath(); c.roundRect(-4, -7, 7.8, 13, 3); c.fill(); c.restore();
+    path([hip, pose.nearKnee], 5.8); // shorts taper into the exposed lower leg
+    path([pose.nearKnee, nearAnkle], 3.5); shoe(nearAnkle);
+    path([shoulder, pose.elbow], 4.6); path([pose.elbow, hand], 3); c.beginPath(); c.arc(hand[0], hand[1], 1.9, 0, TAU); c.fill();
+    path([shoulder, [pose.head[0] - 1, pose.head[1] + 3]], 3.6);
+    c.save(); c.translate(...pose.head); c.rotate(pose.headTilt);
+    c.beginPath(); c.ellipse(0, 0, 4.4, 5.1, -.12, 0, TAU); c.fill();
+    // Profile, nose and a short forward cap brim, matching the supplied silhouette.
+    c.beginPath(); c.moveTo(3, -1); c.lineTo(5.7, 1); c.lineTo(3.3, 2); c.lineTo(2, 4); c.closePath(); c.fill();
+    c.beginPath(); c.ellipse(-.5, -3.1, 5.8, 3.1, -.1, Math.PI, TAU); c.lineTo(5.1, -2.7); c.closePath(); c.fill();
+    path([[1, -3.6], [8, -2.5]], 1.8); c.restore();
     c.restore();
   }
   drawParticles(dt, s, stopped, p) {
