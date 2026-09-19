@@ -28,7 +28,8 @@ export class RiderSprite {
     const splitY = top + waist * scale;
     const hubs = [[109, 338], [344, 346]];
     const spokeRadius = 59 * scale;
-    // Rotate the raster wheel interiors independently even when freewheeling.
+    // The sheet includes the fork and rear stays inside each wheel. Never rotate
+    // those pixels: replace only the spokes, then restore the fixed connections.
     ctx.save();
     ctx.beginPath(); ctx.rect(left, top, width, height + 1);
     for (const [x, y] of hubs) {
@@ -45,11 +46,35 @@ export class RiderSprite {
     ctx.drawImage(this.image, sx, sy + waist, cellW, cellH - waist,
       left, splitY, width, height - waist * scale);
     ctx.restore();
-    for (const [x, y] of hubs) {
+    for (const [index, [x, y]] of hubs.entries()) {
       ctx.save();
       ctx.translate(left + x * scale, top + y * scale);
       ctx.beginPath(); ctx.arc(0, 0, spokeRadius + .05, 0, Math.PI * 2); ctx.clip();
-      ctx.rotate(state.x / (80 * scale));
+      ctx.strokeStyle = '#101c23'; ctx.lineWidth = .15;
+      const wheelAngle = state.x / (80 * scale);
+      ctx.beginPath();
+      for (let spoke = 0; spoke < 24; spoke++) {
+        const angle = wheelAngle + spoke * Math.PI / 12;
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(angle) * spokeRadius, Math.sin(angle) * spokeRadius);
+      }
+      ctx.stroke();
+      // Clip the unrotated source to the fork / stays / hub silhouettes.
+      ctx.beginPath();
+      ctx.arc(0, 0, 17 * scale, 0, Math.PI * 2);
+      const connections = index === 0
+        ? [[211, 244, 20], [220, 347, 23]]
+        : [[302, 232, 19]];
+      for (const [endX, endY, thickness] of connections) {
+        const dx = endX - x, dy = endY - y;
+        const length = Math.hypot(dx, dy);
+        const nx = -dy / length * thickness / 2, ny = dx / length * thickness / 2;
+        ctx.moveTo(-nx * scale, -ny * scale);
+        ctx.lineTo((dx - nx) * scale, (dy - ny) * scale);
+        ctx.lineTo((dx + nx) * scale, (dy + ny) * scale);
+        ctx.lineTo(nx * scale, ny * scale); ctx.closePath();
+      }
+      ctx.clip();
       ctx.drawImage(this.image, sx, sy, cellW, cellH,
         -x * scale, -y * scale, width, height);
       ctx.restore();
