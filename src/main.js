@@ -109,6 +109,8 @@ function closeOverlay(restoreFocus = true) {
   if (restoreFocus && lastFocus?.isConnected) lastFocus.focus({ preventScroll: true });
 }
 function startRide(x = null) {
+  // Request during the initial start gesture; never force it back after exit.
+  if (mode === 'intro') void enterFullscreen(true);
   if (x !== null) bike.reset(x);
   previousPose = null;
   mode = 'riding'; crashShown = false; closeOverlay(false); clearInput();
@@ -192,11 +194,21 @@ function closeSubpanel() {
   else if (previousMode === 'crashed') { mode = 'crashed'; openOverlay('crash-overlay'); }
   else { mode = previousMode; closeOverlay(); }
 }
+function fullscreenElement() { return document.fullscreenElement || document.webkitFullscreenElement; }
+async function enterFullscreen(quiet = false) {
+  if (fullscreenElement()) return;
+  const root = document.documentElement;
+  const request = root.requestFullscreen || root.webkitRequestFullscreen;
+  if (!request) { if (!quiet) notify('Fullscreen is unavailable in this browser.'); return; }
+  try { await request.call(root, { navigationUI: 'hide' }); }
+  catch { if (!quiet) notify('Fullscreen is unavailable in this browser.'); }
+}
 async function fullscreen() {
   try {
-    if (document.fullscreenElement) await document.exitFullscreen();
-    else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-    else notify('Your browser already uses the full available screen.');
+    if (fullscreenElement()) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      await exit.call(document);
+    } else await enterFullscreen();
   } catch { notify('Fullscreen is unavailable in this browser.'); }
 }
 
@@ -271,7 +283,15 @@ window.addEventListener('keyup', event => keys.delete(event.code));
 window.addEventListener('blur', () => { clearInput(); if (mode === 'riding' || mode === 'summit') pause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(); save(); } last = performance.now(); accumulator = 0; });
 window.addEventListener('resize', () => scene.resize());
-document.addEventListener('fullscreenchange', () => { $('fullscreen-button').setAttribute('aria-label', document.fullscreenElement ? 'Exit fullscreen' : 'Enter fullscreen'); scene.resize(); });
+function syncFullscreen() {
+  const active = Boolean(fullscreenElement());
+  $('fullscreen-button').setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+  $('fullscreen-button').setAttribute('aria-pressed', String(active));
+  $('fullscreen-button').title = `${active ? 'Exit' : 'Enter'} fullscreen (F)`;
+  scene.resize();
+}
+document.addEventListener('fullscreenchange', syncFullscreen);
+document.addEventListener('webkitfullscreenchange', syncFullscreen);
 window.addEventListener('hashchange', () => { if (readSeed() !== world.seed) { restart(readSeed()); } });
 window.addEventListener('pagehide', save);
 
