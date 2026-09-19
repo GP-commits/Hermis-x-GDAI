@@ -62,7 +62,8 @@ service cloud.firestore {
           && d.updatedAt == request.time;
       }
       allow get: if true;
-      allow list: if request.query.limit != null && request.query.limit <= 50;
+      allow list: if (request.query.limit != null && request.query.limit <= 50)
+        || (request.auth != null && request.auth.token.firebase.sign_in_provider == 'google.com' && request.auth.token.email_verified == true);
       allow create: if owner() && validRecord();
       allow update: if owner() && validRecord()
         && (request.resource.data.score > resource.data.score

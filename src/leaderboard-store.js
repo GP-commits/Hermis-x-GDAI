@@ -21,3 +21,16 @@ export async function saveHighScore(db, sdk, user, candidate, stillSignedIn = ()
     }
   }
 }
+
+export async function getPlayerRank(db, sdk, uid, best) {
+  const { collection, query, where, orderBy, documentId, getCountFromServer } = sdk;
+  const base = collection(db, COLLECTION);
+  const ordering = [orderBy('score', 'desc'), orderBy('distanceMeters', 'desc'), orderBy(documentId(), 'desc')];
+  const ahead = [
+    query(base, where('score', '>', best.score), ...ordering),
+    query(base, where('score', '==', best.score), where('distanceMeters', '>', best.distanceMeters), ...ordering),
+    query(base, where('score', '==', best.score), where('distanceMeters', '==', best.distanceMeters), where(documentId(), '>', uid), ...ordering),
+  ];
+  const counts = await Promise.all(ahead.map(q => getCountFromServer(q)));
+  return 1 + counts.reduce((sum, result) => sum + result.data().count, 0);
+}

@@ -6,14 +6,18 @@ export function bindLeaderboard(service, isEligible) {
     $('crash-account-prompt').classList.toggle('hidden', Boolean(state.user && state.profile));
     $('crash-sign-in').textContent = state.user ? 'Complete player details' : 'Sign in to save your score';
     $('crash-account-note').textContent = state.user ? 'Add your name, department, and year to enter the leaderboard.' : 'Sign in to save this run and compete with your classmates.';
-    $('live-board').querySelector('.eyebrow').textContent = state.connection === 'live' ? 'LIVE LEADERBOARD' : 'LEADERBOARD';
-    const liveRows = JSON.stringify(state.rows.slice(0, 3).map(row => [row.displayName, row.score]));
+    $('live-board').querySelector('.eyebrow').textContent = state.connection === 'live' ? 'LIVE · TOP 5' : 'TOP 5';
+    const liveRows = JSON.stringify(state.rows.slice(0, 5).map(row => [row.displayName, row.department, row.score]));
     const liveKey = liveRows + state.connection;
     if (liveKey !== lastLiveRows) {
       lastLiveRows = liveKey; $('live-board-rows').replaceChildren();
-      for (const [i, row] of state.rows.slice(0, 3).entries()) { const line = document.createElement('span'); line.className = 'live-board-row'; const name = document.createElement('span'); name.textContent = `${i + 1}. ${row.displayName}`; const score = document.createElement('b'); score.textContent = number(row.score); line.append(name, score); $('live-board-rows').append(line); }
+      for (const [i, row] of state.rows.slice(0, 5).entries()) { const line = document.createElement('span'); line.className = 'live-board-row'; const name = document.createElement('span'); name.className = 'live-player'; const fullName = document.createElement('strong'); fullName.textContent = `${i + 1}. ${row.displayName}`; const department = document.createElement('small'); department.textContent = row.department || ''; name.append(fullName, department); const score = document.createElement('b'); score.textContent = number(row.score); line.append(name, score); $('live-board-rows').append(line); }
       if (!state.rows.length) $('live-board-rows').textContent = state.connection === 'live' ? 'Set the first score ↗' : state.connection === 'connecting' || state.connection === 'idle' ? 'Connecting…' : 'Tap to view scores ↗';
     }
+    $('live-player-name').textContent = state.user ? state.profile?.name || state.user.name : 'Sign in to see your rank';
+    $('live-player-department').textContent = state.user ? state.profile?.department || 'Complete your player details' : '';
+    $('live-player-rank').textContent = state.user ? state.rankLoading ? '…' : state.rank ? `#${state.rank}` : state.best ? '—' : 'Unranked' : '';
+    $('live-player-score').textContent = state.user && state.best ? `${number(state.best.score)} pts` : '';
     const needsForm = state.needsProfile && !state.profileLoading;
     $('profile-form').classList.toggle('hidden', !needsForm);
     $('profile-loading').classList.toggle('hidden', !state.profileLoading);

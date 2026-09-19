@@ -1,4 +1,4 @@
-import { saveHighScore } from './leaderboard-store.js';
+import { saveHighScore, getPlayerRank } from './leaderboard-store.js';
 import { firebaseConfig, emulatorConfig } from './firebase-config.js';
 import { COLLECTION, BOARD_LIMIT, compareScores, displayName, validScore, validProfile, PROFILES, RULESET } from './leaderboard-model.js';
 
@@ -12,6 +12,7 @@ export class LeaderboardService extends EventTarget {
   constructor() {
     super();
     this.configured = Boolean(firebaseConfig?.apiKey && firebaseConfig?.projectId && firebaseConfig?.authDomain && firebaseConfig?.appId);
+    this.rank = null; this.rankLoading = false; this.rankRequest = 0; this.rankTimer = null;
     this.profile = null; this.profileLoading = false; this.profileError = ''; this.profileSaving = false;
     this.ready = false; this.user = null; this.rows = []; this.best = null; this.pending = null;
     this.guestBest = read(`duskride:${RULESET}:guest-score`);
@@ -23,7 +24,7 @@ export class LeaderboardService extends EventTarget {
     window.addEventListener('offline', () => { this.connection = 'offline'; this.emit(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.persist(); else if (this.pending && this.user) this.flush(); });
   }
-  snapshot() { return { profile: this.profile, needsProfile: Boolean(this.user && !this.profile), profileLoading: this.profileLoading, profileError: this.profileError, profileSaving: this.profileSaving, configured: this.configured, ready: this.ready, user: this.user, rows: this.rows, best: this.best, pending: this.pending, guestBest: this.guestBest, connection: this.connection, sync: this.sync, error: this.error }; }
+  snapshot() { return { rank: this.rank, rankLoading: this.rankLoading, profile: this.profile, needsProfile: Boolean(this.user && !this.profile), profileLoading: this.profileLoading, profileError: this.profileError, profileSaving: this.profileSaving, configured: this.configured, ready: this.ready, user: this.user, rows: this.rows, best: this.best, pending: this.pending, guestBest: this.guestBest, connection: this.connection, sync: this.sync, error: this.error }; }
   emit(extra = {}) { this.dispatchEvent(new CustomEvent('change', { detail: { ...this.snapshot(), ...extra } })); }
   async init() {
     if (!this.configured || this.ready) return this.ready;
@@ -46,6 +47,7 @@ export class LeaderboardService extends EventTarget {
           authSDK.onAuthStateChanged(this.auth, account => {
             const previousUID = this.user?.uid || null;
             this.user = account ? { uid: account.uid, name: displayName(account.displayName) } : null;
+            this.rank = null; this.rankRequest++; clearTimeout(this.rankTimer);
             this.profile = null; this.profileLoading = Boolean(account); this.profileError = '';
             this.best = null; this.pending = account ? read(outboxKey(account.uid)) : null;
             if (!validScore(this.pending)) this.pending = null;
@@ -80,11 +82,24 @@ export class LeaderboardService extends EventTarget {
     this.unsubscribeRows = onSnapshot(board, { includeMetadataChanges: true }, snapshot => {
       this.rows = snapshot.docs.map(row => ({ uid: row.id, ...row.data() }));
       this.connection = snapshot.metadata.fromCache ? navigator.onLine ? 'connecting' : 'offline' : 'live';
-      this.error = ''; this.emit();
+      this.error = ''; this.emit(); this.scheduleRank();
     }, () => { this.connection = 'error'; this.error = 'The leaderboard is unavailable right now. Your ride is still saved on this device.'; this.emit(); });
     if (this.user) this.unsubscribeBest = onSnapshot(doc(this.db, COLLECTION, this.user.uid), snapshot => {
-      this.best = snapshot.exists() ? snapshot.data() : null; this.emit();
+      this.best = snapshot.exists() ? snapshot.data() : null; this.emit(); this.scheduleRank();
     }, () => { this.sync = this.pending ? 'pending' : 'error'; this.emit(); });
+  }
+  scheduleRank() {
+    clearTimeout(this.rankTimer);
+    const visibleRank = this.rows.findIndex(row => row.uid === this.user?.uid);
+    if (visibleRank >= 0) { this.rankRequest++; this.rank = visibleRank + 1; this.rankLoading = false; this.emit(); return; }
+    if (!this.user || !this.best) { this.rank = null; this.rankLoading = false; this.emit(); return; }
+    this.rankLoading = true; this.emit();
+    this.rankTimer = setTimeout(async () => {
+      const request = ++this.rankRequest, uid = this.user.uid, best = this.best;
+      try { const rank = await getPlayerRank(this.db, this.storeSDK, uid, best); if (request === this.rankRequest && uid === this.user?.uid) this.rank = rank; }
+      catch { if (request === this.rankRequest) this.rank = null; }
+      finally { if (request === this.rankRequest) { this.rankLoading = false; this.emit(); } }
+    }, 1000);
   }
   async loadProfile() {
     if (!this.user) return;
@@ -162,7 +177,7 @@ export class LeaderboardService extends EventTarget {
       const stored = read(outboxKey(user.uid));
       if (sameScore(stored, candidate) || compareScores(stored, saved) <= 0) write(outboxKey(user.uid), null);
       if (this.user?.uid === user.uid) {
-        this.best = saved;
+        this.best = saved; this.scheduleRank();
         if (compareScores(this.pending, saved) <= 0) this.pending = null;
         this.sync = this.pending ? 'pending' : 'saved'; this.error = ''; this.emit();
       }
